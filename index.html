@@ -2,87 +2,219 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-sca
-le=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>iCloud Login - Budget</title>
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI"
-, "PingFang SC",
-, "PingFang SC",
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
         "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       margin: 0;
       min-height: 100vh;
-      display: fl
+      display: flex;
       align-items: center;
-      justify-con
+      justify-content: center;
       background: #f5f5f7;
-      color: #1d1
+      color: #1d1d1f;
     }
     .card {
-      max-width:
-      padding: 32
+      width: 100%;
+  <title>iCloud Login - Budg
+  <style>
+    body {
+      font-family: -apple-sygoe UI", "PingFang SC",
+        "Hiragino Sans GB", ;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+    .card {
+      width: 100%;
+      max-width: 480px;
+      margin: 24px;
+      padding: 28px 24px;
       background: #fff;
-      border-radi
+      border-radius: 12px;
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-      text-align: center;
     }
     h1 {
-      font-size: 18px;
-      font-weight
+      font-size: 20px;
+      font-weight: 600;
       margin: 0 0 12px;
     }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #34c759;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .badge.warn { background: #ff9500; }
     p {
-      font-size:
+      font-size: 14px;
       color: #6e6e73;
-      margin: 0 0
-      line-height: 1.5;
+      margin: 0 0 16px;
+      line-height: 1.6;
     }
-    .manual {
-      display: no
-      margin-top: 24px;
-      font-size:
-      color: #6e6e73;
+    .url {
+      display: block;
+      margin: 12px 0;
+      padding: 12px;
+      background: #f5f5f7;
+      border-radius: 8px;
+      font-family: ui-monosp", Menlo, monospace;
+      font-size: 11px;
+      word-break: break-all;
+      color: #1d1d1f;
+      user-select: all;
+      -webkit-user-select: all;
+      max-height: 120px;
+      overflow-y: auto;
     }
-    .manual a {
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    button.primary, a.deeplink {
       display: inline-block;
       padding: 10px 18px;
-      margin-top:
       background: #007aff;
       color: #fff;
-      text-decoration: none;
-      border-radi
+      border: none;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    button.primary:active, a
+      opacity: 0.7;
+    }
+    button.secondary {
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+    .step {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e5e7;
+      font-size: 12px;
+      color: #6e6e73;
+      line-height: 1.6;
+    }
+    .step strong {
+      color: #1d1d1f;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>iCloud 登录成功</h1>
-    <p>正在返回 B
-    <div class="manual" id="manual">
-      <span>没有自动跳转？点下方按钮</span><br>
-      <a id="link" href="#">手动返回 App</a>
+    <h1 id="title">iCloud 登录成功</h1>
+    <div class="badge" id="badge">回调链接已复制到剪贴板</div>
+    <p id="hint">回到 Budget App，把链接粘贴到「在其他设备登录 iCloud」输入框即可。</p>
+    <div class="url" id="url"></div>
+    <div class="actions">
+      <button class="primary" onclick="copyUrl()">再次复制</button>
+      <a class="deeplink" id="link" href="#">尝试自动跳转 App</a>
+    </div>
+    <div class="step" id="autoCopyStatus" style="display:none;"></div>
+    <div class="step">
+      <strong>说明：</strong>
+      多数浏览器（Safari / Chrome）允许从这个页面直接复制到剪贴板；
+      若浏览器拒绝（部分 PC Chrome 安全策略），请手动点上面的"再次复制"按钮，
+      或者长按 / 选中链接复制。
     </div>
   </div>
   <script>
     (function () {
-      // Apple 把参数拼在 query 里
-送过来；
+      // Apple 把 ckWebAuthToken / ckSession 等参数拼在 query 里送过来；
       // 直接整段 query 透传给自定义 scheme，App 那边解析。
-      var deepLink = 'budget-cross://cloudkit-callback' + locati
-on.search;
-      var manual = document.getElementById('manual');
-      var link = document.getElementById('link');
-      link.href =
-      // 立即重定向 —— 多数浏览器会直接唤起 App
-      location.replace(deepLink);
-      // 兜底：1.
-      setTimeout(function () {
-        manual.style.display = 'block';
-      }, 1500);
+      var deepLink = 'budget-cross://cloudkit-callback' + location.search;
+      document.getElementById('url').textContent = deepLink;
+      document.getElementById('link').href = deepLink;
+
+      // 1. 立即试 deep-link 跳转 —— 装了 App 的端会被系统拉起
+      //    没装的端浏览器停留本页（多数跨设备登录场景）
+      try {
+        // 用 anchor 触发而不是 location.replace —— 避免被某些浏览器拦截
+        // location.replace(deepLink) 在严格模式下也会报 Cross-Origin
+        var a = document.createElement('a');
+        a.href = deepLink;
+        a.click();
+      } catch (e) {}
+
+      // 2. 自动复制 callback URL 到剪贴板
+      autoCopy(deepLink);
     })();
+
+    async function autoCopy(text) {
+      var status = document.getElementById('autoCopyStatus');
+      var badge = document.getElementById('badge');
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          status.textContent = '✓ 自动复制到剪贴板（' + new Date().toLocaleTimeString()
++ '）';
+          status.style.display = 'block';
+          return;
+        }
+      } catch (e) {
+        // 浏览器拒绝（permission / 非用户手势触发等）
+      }
+      // fallback: 老浏览器走 execCommand 套路
+      try {
+        var range = document.createRange();
+        range.selectNode(document.getElementById('url'));
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        var ok = document.execCommand('copy');
+        sel.removeAllRanges();
+        if (ok) {
+          status.textContent = '✓ 自动复制到剪贴板（兼容模式）';
+          status.style.display = 'block';
+          return;
+        }
+      } catch (e) {}
+      // 全部失败 → 提示手动
+      badge.textContent = '请手动复制下方链接';
+      badge.classList.add('warn');
+      document.getElementById('hint').textContent =
+          '当前浏览器不支持自动复制，请点"再次复制"按钮或长按链接复制。';
+    }
+
+    async function copyUrl() {
+      var text = document.getElementById('url').textContent;
+      var badge = document.getElementById('badge');
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          var range = document.createRange();
+          range.selectNode(document.getElementById('url'));
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(range);
+          document.execCommand('copy');
+          window.getSelection().removeAllRanges();
+        }
+        badge.textContent = '已复制 ✓';
+        badge.classList.remove('warn');
+        setTimeout(function () {
+          badge.textContent = '回调链接已复制到剪贴板';
+        }, 1800);
+      } catch (e) {
+        badge.textContent = '复制失败，请手动选中';
+        badge.classList.add('warn');
+      }
+    }
   </script>
 </body>
 </html>
