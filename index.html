@@ -68,7 +68,7 @@
       flex-wrap: wrap;
       margin-top: 8px;
     }
-    button.primary, a.deeplink {
+    button.primary, a.deeplink, a.download-link {
       display: inline-block;
       padding: 10px 18px;
       background: #007aff;
@@ -80,8 +80,12 @@
       cursor: pointer;
       text-decoration: none;
     }
-    button.primary:active, a.deeplink:active {
+    button.primary:active, a.deeplink:active, a.download-link:active {
       opacity: 0.7;
+    }
+    a.download-link {
+      background: #f5f5f7;
+      color: #1d1d1f;
     }
     button.secondary {
       background: #f5f5f7;
@@ -109,6 +113,7 @@
     <div class="actions">
       <button class="primary" onclick="copyUrl()">再次复制</button>
       <a class="deeplink" id="link" href="#">尝试自动跳转 App</a>
+      <a class="download-link" href="download/">下载测试包</a>
     </div>
     <div class="step" id="autoCopyStatus" style="display:none;"></div>
     <div class="step">
